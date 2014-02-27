@@ -17,19 +17,20 @@ import com.notsohard.framework.Screen;
 import com.notsohard.framework.android.gl.GLGame;
 import com.notsohard.framework.android.gl.GLGraphics;
 import com.notsohard.framework.android.gl.Texture;
+import com.notsohard.framework.android.gl.Vertices;
 
 public class GLTestScreen extends Screen{
 
 	GLGraphics glGraphics;
-	FloatBuffer vertices;
+	//FloatBuffer vertices;
 	ShortBuffer indices;
-	int VERTEX_SIZE = (2+2) * 4;
+	Vertices vertices;
 	Texture texture;
 	
 	public GLTestScreen(Game game) {
 		super(game);
 		glGraphics = ((GLGame) game).getGLGraphics();
-		ByteBuffer byteBuffer = ByteBuffer.allocateDirect(4*VERTEX_SIZE);
+		/*ByteBuffer byteBuffer = ByteBuffer.allocateDirect(4*VERTEX_SIZE);
 		byteBuffer.order(ByteOrder.nativeOrder());
 		vertices = byteBuffer.asFloatBuffer();
 		vertices.put(new float[]{ 	100.0f, 100.0f, 0.0f, 1.0f, 
@@ -44,7 +45,15 @@ public class GLTestScreen extends Screen{
 		indices.put(new short[]{0, 1, 2,
 								2, 3, 0});
 		indices.flip();
-		
+		*/
+		vertices = new Vertices(glGraphics, 4, 6, false, true);
+		vertices.setVertices(new float[]{ 	100.0f, 100.0f, 0.0f, 1.0f, 
+											228.0f, 100.0f, 1.0f, 1.0f, 
+											228.0f, 228.0f, 1.0f, 0.0f,
+											100.0f, 228.0f, 0.0f, 0.0f }, 0, 16);
+		vertices.setIndices(new short[]{0, 1, 2,
+										2, 3, 0}, 0, 6);
+				
 		texture = new Texture( (GLGame)game, "sredni_yoba.png");
 	}
 	
@@ -68,7 +77,7 @@ public class GLTestScreen extends Screen{
 		gl.glEnable(GL10.GL_TEXTURE_2D);
 		texture.bind();
 		
-		gl.glEnableClientState(GL10.GL_VERTEX_ARRAY);
+		/*gl.glEnableClientState(GL10.GL_VERTEX_ARRAY);
 		gl.glEnableClientState(GL10.GL_TEXTURE_COORD_ARRAY);
 		
 		vertices.position(0);
@@ -78,6 +87,8 @@ public class GLTestScreen extends Screen{
 		gl.glTexCoordPointer(2, GL10.GL_FLOAT, VERTEX_SIZE, vertices);
 		
 		gl.glDrawElements(GL10.GL_TRIANGLES, 6, GL10.GL_UNSIGNED_SHORT, indices);
+		*/
+		vertices.draw(GL10.GL_TRIANGLES, 0, 6);
 	}
  
 	@Override
