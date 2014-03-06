@@ -20,6 +20,7 @@ public abstract class AndroidGame extends Activity implements Game {
 	
 	Graphics graphics;
 	Screen screen;
+	Input input;
 	AndroidFastRenderView renderView;
 	
 	@Override
@@ -33,9 +34,19 @@ public abstract class AndroidGame extends Activity implements Game {
         int frameBufferHeight = 400;
         Bitmap frameBuffer = Bitmap.createBitmap(frameBufferWidth, frameBufferHeight, Config.RGB_565);
         
+        float scaleX = (float) frameBufferWidth
+        	/ getWindowManager().getDefaultDisplay().getWidth();
+        float scaleY = (float) frameBufferHeight
+        	/ getWindowManager().getDefaultDisplay().getHeight();
+        		
+        input = new AndroidInput(this, renderView, scaleX, scaleY);
+        
+        
         graphics = new AndroidGraphics(getAssets(), frameBuffer);
                 
         renderView = new AndroidFastRenderView(this, frameBuffer);
+        
+       
        
         screen = getStartScreen();
         
@@ -60,7 +71,7 @@ public abstract class AndroidGame extends Activity implements Game {
 	@Override
 	public Input getInput() {
 		// TODO Auto-generated method stub
-		return null;
+		return input;
 	}
 
 	@Override

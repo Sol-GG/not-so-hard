@@ -5,6 +5,6 @@ import com.notsohard.framework.android.gl.GLGame;
 
 public class GooseEscapeGame extends GLGame {
 		public Screen getStartScreen(){
-			return new GLTestScreen(this);
+			return new CannonScreen(this);
 		}
 }

@@ -1,18 +1,14 @@
 package com.notsohard.goose.escape;
 
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.nio.FloatBuffer;
 import java.nio.ShortBuffer;
+import java.util.List;
 
 import javax.microedition.khronos.opengles.GL10;
 
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.opengl.GLUtils;
+import android.util.Log;
 
 import com.notsohard.framework.Game;
+import com.notsohard.framework.Input.TouchEvent;
 import com.notsohard.framework.Screen;
 import com.notsohard.framework.android.gl.GLGame;
 import com.notsohard.framework.android.gl.GLGraphics;
@@ -27,34 +23,32 @@ public class GLTestScreen extends Screen{
 	Vertices vertices;
 	Texture texture;
 	
+	int curX=0;
+	int curY=0;
+	
+	int numYobas = 10;
+	Yoba[] yobas;
+	FPSCounter fps;
+	
 	public GLTestScreen(Game game) {
 		super(game);
+		fps = new FPSCounter();
 		glGraphics = ((GLGame) game).getGLGraphics();
-		/*ByteBuffer byteBuffer = ByteBuffer.allocateDirect(4*VERTEX_SIZE);
-		byteBuffer.order(ByteOrder.nativeOrder());
-		vertices = byteBuffer.asFloatBuffer();
-		vertices.put(new float[]{ 	100.0f, 100.0f, 0.0f, 1.0f, 
-									228.0f, 100.0f, 1.0f, 1.0f, 
-									228.0f, 228.0f, 1.0f, 0.0f,
-									100.0f, 228.0f, 0.0f, 0.0f });
-		vertices.flip();
-		
-		byteBuffer = ByteBuffer.allocateDirect(6*2);
-		byteBuffer.order(ByteOrder.nativeOrder());
-		indices = byteBuffer.asShortBuffer();
-		indices.put(new short[]{0, 1, 2,
-								2, 3, 0});
-		indices.flip();
-		*/
+
 		vertices = new Vertices(glGraphics, 4, 6, false, true);
-		vertices.setVertices(new float[]{ 	100.0f, 100.0f, 0.0f, 1.0f, 
-											228.0f, 100.0f, 1.0f, 1.0f, 
-											228.0f, 228.0f, 1.0f, 0.0f,
-											100.0f, 228.0f, 0.0f, 0.0f }, 0, 16);
+		vertices.setVertices(new float[]{ 	-64.0f, -64.0f, 0.0f, 1.0f, 
+											64.0f, -64.0f, 1.0f, 1.0f, 
+											64.0f, 64.0f, 1.0f, 0.0f,
+											-64.0f, 64.0f, 0.0f, 0.0f }, 0, 16);
 		vertices.setIndices(new short[]{0, 1, 2,
 										2, 3, 0}, 0, 6);
 				
 		texture = new Texture( (GLGame)game, "sredni_yoba.png");
+		
+		yobas = new Yoba[numYobas];
+		for (int i=0; i<numYobas; i++){
+			yobas[i]=new Yoba();
+		}
 	}
 	
 
@@ -62,33 +56,38 @@ public class GLTestScreen extends Screen{
 	@Override
 	public void update(float deltaTime) {
 		// TODO Auto-generated method stub
+		for(int i=0; i<numYobas; i++){
+			yobas[i].update(deltaTime);
+		}
+		
+
+		List<TouchEvent> touchEvents = game.getInput().getTouchEvents();
+		int len = touchEvents.size();
+		for (int i = 0; i < len; i++) {
+			TouchEvent event = touchEvents.get(i);
+			if( (event.x!=curX) && (event.y!=curY) ){
+				curX = event.x;
+				curY = event.y;
+				Log.d("Touch","X="+curX+" Y="+curY);
+			}
+			break;
+		}
 		
 	}
 
 	@Override
 	public void present(float deltaTime) {
 		GL10 gl = glGraphics.getGL();
-		gl.glViewport(0, 0, glGraphics.getWidth(), glGraphics.getHeight());
 		gl.glClear(GL10.GL_COLOR_BUFFER_BIT);
-		gl.glMatrixMode(GL10.GL_PROJECTION);	
-		gl.glLoadIdentity();
-		gl.glOrthof(0f, 1280.0f, 0f, 800.0f, 1, -1);
-		
-		gl.glEnable(GL10.GL_TEXTURE_2D);
-		texture.bind();
-		
-		/*gl.glEnableClientState(GL10.GL_VERTEX_ARRAY);
-		gl.glEnableClientState(GL10.GL_TEXTURE_COORD_ARRAY);
-		
-		vertices.position(0);
-		gl.glVertexPointer(2, GL10.GL_FLOAT, VERTEX_SIZE, vertices);
-		
-		vertices.position(2);
-		gl.glTexCoordPointer(2, GL10.GL_FLOAT, VERTEX_SIZE, vertices);
-		
-		gl.glDrawElements(GL10.GL_TRIANGLES, 6, GL10.GL_UNSIGNED_SHORT, indices);
-		*/
-		vertices.draw(GL10.GL_TRIANGLES, 0, 6);
+		vertices.bind();
+		for(int i=0; i< numYobas; i++){
+			gl.glLoadIdentity();
+			gl.glTranslatef(yobas[i].x, yobas[i].y, 0);
+			gl.glRotatef(yobas[i].angle, 0, 0, 1);
+			vertices.draw(GL10.GL_TRIANGLES, 0, 6);
+		}
+		vertices.unbind();
+		fps.logFrame();
 	}
  
 	@Override
@@ -100,6 +99,19 @@ public class GLTestScreen extends Screen{
 	@Override
 	public void resume() {
 		// TODO Auto-generated method stub
+		GL10 gl = glGraphics.getGL();
+		gl.glViewport(0, 0, glGraphics.getWidth(), glGraphics.getHeight());
+		gl.glClearColor(0, 1.0f, 1.0f, 1.0f);
+		gl.glMatrixMode(GL10.GL_PROJECTION);	
+		gl.glLoadIdentity();
+		gl.glOrthof(0f, 1280.0f, 0f, 768.0f, 1, -1);
+		gl.glEnable(GL10.GL_BLEND);
+		gl.glBlendFunc(GL10.GL_SRC_ALPHA, GL10.GL_ONE_MINUS_SRC_ALPHA);
+		texture.reload();
+		gl.glEnable(GL10.GL_TEXTURE_2D);
+		texture.bind();
+		gl.glMatrixMode(GL10.GL_MODELVIEW);
+
 		
 	}
 

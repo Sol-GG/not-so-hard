@@ -1,7 +1,5 @@
 package com.notsohard.framework.android.gl;
 
-import java.util.Random;
-
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
@@ -19,6 +17,7 @@ import com.notsohard.framework.Graphics;
 import com.notsohard.framework.Input;
 import com.notsohard.framework.Screen;
 import com.notsohard.framework.android.AndroidFileIO;
+import com.notsohard.framework.android.AndroidInput;
 
 public abstract class GLGame extends Activity implements Game, Renderer{
 	enum GLGameState{
@@ -33,6 +32,7 @@ public abstract class GLGame extends Activity implements Game, Renderer{
 	GLGraphics glGraphics;
 	Screen screen;
 	FileIO fileIO;
+	Input input;
 	GLGameState state = GLGameState.Initialised;
 	Object stateChanged = new Object();
 	long startTime = System.nanoTime();
@@ -46,7 +46,10 @@ public abstract class GLGame extends Activity implements Game, Renderer{
         glView = new GLSurfaceView(this);
         glView.setRenderer(this);
         setContentView(glView);
-        
+       
+            		
+        input = new AndroidInput(this, glView, 1, 1);
+            
         glGraphics = new GLGraphics(glView);  
         fileIO = new AndroidFileIO(this);
     }
@@ -133,7 +136,7 @@ public abstract class GLGame extends Activity implements Game, Renderer{
 	@Override
 	public Input getInput() {
 		// TODO Auto-generated method stub
-		return null;
+		return input;
 	}
 
 	@Override
@@ -169,7 +172,7 @@ public abstract class GLGame extends Activity implements Game, Renderer{
 		return screen;
 	}	
 	
-	static class SimpleRenderer implements Renderer{
+	/*static class SimpleRenderer implements Renderer{
 		Random rand = new Random();
 		@Override
 		public void onDrawFrame(GL10 gl) {
@@ -187,6 +190,6 @@ public abstract class GLGame extends Activity implements Game, Renderer{
 		public void onSurfaceCreated(GL10 gl, EGLConfig config) {
 			Log.d("Testin", "Created");
 		}
-	}
+	}*/
 	
 }

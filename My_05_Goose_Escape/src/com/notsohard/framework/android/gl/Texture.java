@@ -52,7 +52,7 @@ public class Texture {
 		}
 	}
 	
-	private void reload(){
+	public void reload(){
 		load();
 		bind();
 		setFilters(minFilter, magFilter);
