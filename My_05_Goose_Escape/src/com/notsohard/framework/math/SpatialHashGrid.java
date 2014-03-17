@@ -4,10 +4,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 import android.util.FloatMath;
+import android.util.Log;
 
 import com.notsohard.framework.GameObject;
 
 public class SpatialHashGrid {
+	final int MAX_OBJ_IN_CELL = 20;
 	List<GameObject>[] dynamicCells;
 	List<GameObject>[] staticCells;
 	int cellsPerRow;
@@ -28,11 +30,11 @@ public class SpatialHashGrid {
 		staticCells = new List[numCells];
 		
 		for(int i = 0; i < numCells; i++) {
-			dynamicCells[i] = new ArrayList<GameObject>(10);
-			staticCells[i] = new ArrayList<GameObject>(10);
+			dynamicCells[i] = new ArrayList<GameObject>(MAX_OBJ_IN_CELL);
+			staticCells[i] = new ArrayList<GameObject>(MAX_OBJ_IN_CELL);
 		}
 		
-		foundObjects = new ArrayList<GameObject>(10);
+		foundObjects = new ArrayList<GameObject>(MAX_OBJ_IN_CELL);
 	}
 	
 	public void insertStaticObject(GameObject obj) {
@@ -105,10 +107,11 @@ public class SpatialHashGrid {
 	
 	public int[] getCellIds(GameObject obj) {
 		
-		int x1 = (int)FloatMath.floor(obj.position.x-(obj.bounds.width/2) / cellSize);
-		int y1 = (int)FloatMath.floor(obj.position.y-(obj.bounds.height/2) / cellSize);
-		int x2 = (int)FloatMath.floor((obj.position.x+(obj.bounds.width/2)) / cellSize);
-		int y2 = (int)FloatMath.floor((obj.position.y+(obj.bounds.height/2)) / cellSize);
+		
+		int x1 = (int)FloatMath.floor((obj.position.x-obj.bounds.size.x/2) / cellSize);
+		int y1 = (int)FloatMath.floor((obj.position.y-obj.bounds.size.y/2) / cellSize);
+		int x2 = (int)FloatMath.floor((obj.position.x+obj.bounds.size.x/2) / cellSize);
+		int y2 = (int)FloatMath.floor((obj.position.y+obj.bounds.size.y/2) / cellSize);
 		
 		if(x1 == x2 && y1 == y2) {
 			if(x1 >= 0 && x1 < cellsPerRow && y1 >= 0 && y1 < cellsPerCol)

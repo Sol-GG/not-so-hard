@@ -14,10 +14,10 @@ public class OverlapTester {
 	
 	
 	public static boolean overlapRectangles(Rectangle r1, Rectangle r2) {
-		if(r1.lowerLeft.x < r2.lowerLeft.x + r2.width 
-				&& r1.lowerLeft.x + r1.width > r2.lowerLeft.x 
-				&&	r1.lowerLeft.y < r2.lowerLeft.y + r2.height 
-				&& r1.lowerLeft.y + r1.height > r2.lowerLeft.y)
+		if(r1.getLowerLeft().x < r2.getLowerLeft().x + r2.size.x 
+				&& r1.getLowerLeft().x + r1.size.x > r2.getLowerLeft().x 
+				&&	r1.getLowerLeft().y < r2.getLowerLeft().y + r2.size.y 
+				&& r1.getLowerLeft().y + r1.size.y > r2.getLowerLeft().y)
 			return true;
 		else
 			return false;
@@ -27,18 +27,17 @@ public class OverlapTester {
 	public static boolean overlapCircleRectangle(Circle c, Rectangle r) {
 		float closestX = c.center.x;
 		float closestY = c.center.y;
-		Log.d("Collision narrow","Circle X: "+c.center.x+" Y: "+c.center.y+" - Rect X: "+r.lowerLeft.x+" Y: "+r.lowerLeft.y);
 		
-		if(c.center.x < r.lowerLeft.x) {
-			closestX = r.lowerLeft.x;
-		} else if(c.center.x > r.lowerLeft.x + r.width) {
-			closestX = r.lowerLeft.x + r.width;
+		if(c.center.x < r.getLowerLeft().x) {
+			closestX = r.getLowerLeft().x;
+		} else if(c.center.x > r.getLowerLeft().x + r.size.x) {
+			closestX = r.getLowerLeft().x + r.size.x;
 		}
 		
-		if(c.center.y < r.lowerLeft.y) {
-			closestY = r.lowerLeft.y;
-		} else if(c.center.y > r.lowerLeft.y + r.height) {
-			closestY = r.lowerLeft.y + r.height;
+		if(c.center.y < r.getLowerLeft().y) {
+			closestY = r.getLowerLeft().y;
+		} else if(c.center.y > r.getLowerLeft().y + r.size.y) {
+			closestY = r.getLowerLeft().y + r.size.y;
 		}
 		
 		return c.center.distSquared(closestX, closestY) < c.radius * c.radius;
@@ -67,12 +66,12 @@ public class OverlapTester {
 	}
 	
 	public static boolean pointInRectangle(Rectangle r, Vector2 p) {
-		return r.lowerLeft.x <= p.x && r.lowerLeft.x + r.width >= p.x &&
-				r.lowerLeft.y <= p.y && r.lowerLeft.y + r.height >= p.y;
+		return r.getLowerLeft().x <= p.x && r.getLowerLeft().x + r.size.x >= p.x &&
+				r.getLowerLeft().y <= p.y && r.getLowerLeft().y + r.size.y >= p.y;
 	}
 	
 	public static boolean pointInRectangle(Rectangle r, float x, float y) {
-		return r.lowerLeft.x <= x && r.lowerLeft.x + r.width >= x &&
-				r.lowerLeft.y <= y && r.lowerLeft.y + r.height >= y;
+		return r.getLowerLeft().x <= x && r.getLowerLeft().x + r.size.x >= x &&
+				r.getLowerLeft().y <= y && r.getLowerLeft().y + r.size.y >= y;
 	}
 }

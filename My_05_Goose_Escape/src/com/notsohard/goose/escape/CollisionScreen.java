@@ -12,10 +12,11 @@ import com.notsohard.framework.Game;
 import com.notsohard.framework.GameObject;
 import com.notsohard.framework.Input.TouchEvent;
 import com.notsohard.framework.Screen;
+import com.notsohard.framework.android.gl.Camera2D;
 import com.notsohard.framework.android.gl.GLGame;
 import com.notsohard.framework.android.gl.GLGraphics;
+import com.notsohard.framework.android.gl.Texture;
 import com.notsohard.framework.android.gl.Vertices;
-import com.notsohard.framework.math.Circle;
 import com.notsohard.framework.math.OverlapTester;
 import com.notsohard.framework.math.SpatialHashGrid;
 import com.notsohard.framework.math.Vector2;
@@ -30,11 +31,18 @@ class CollisionScreen extends Screen {
 	DynamicGameObject ball;
 	List<GameObject> targets;
 	SpatialHashGrid grid;
+	
+	Camera2D camera;
 	Vertices cannonVertices;
 	Vertices ballVertices;
 	Vertices targetVertices;
+	Texture ballTexture;
+	
 	Vector2 touchPos = new Vector2();
 	Vector2 gravity = new Vector2(0,-10);
+	
+	
+	FPSCounter fps = new FPSCounter();
 	
 	public CollisionScreen(Game game) {
 		super(game);
@@ -44,6 +52,7 @@ class CollisionScreen extends Screen {
 		ball = new DynamicGameObject(0, 0, 0.2f);
 		targets = new ArrayList<GameObject>(NUM_TARGETS);
 		grid = new SpatialHashGrid(WORLD_WIDTH, WORLD_HEIGHT, 2.5f);
+		camera = new Camera2D(glGraphics, WORLD_WIDTH, WORLD_HEIGHT);
 		
 		for(int i = 0; i < NUM_TARGETS; i++) {
 			GameObject target = new GameObject((float)Math.random() * WORLD_WIDTH,
@@ -57,12 +66,24 @@ class CollisionScreen extends Screen {
 		cannonVertices.setVertices(new float[] { 	-0.5f, -0.5f,
 													0.5f, 0.0f,
 													-0.5f, 0.5f }, 0, 6);
-		ballVertices = new Vertices(glGraphics, 4, 6, false, false);
+		/*ballVertices = new Vertices(glGraphics, 4, 6, false, false);
 		ballVertices.setVertices(new float[] { 	-0.1f, -0.1f,
 												0.1f, -0.1f,
 												0.1f, 0.1f,
 												-0.1f, 0.1f }, 0, 8);
+		ballVertices.setIndices(new short[] {0, 1, 2, 2, 3, 0}, 0, 6);*/
+		
+		//
+		ballVertices = new Vertices(glGraphics, 4, 6, false, true);
+		ballVertices.setVertices(new float[] { 	-0.2f, -0.2f, 0.0f, 1.0f,
+				0.2f, -0.2f, 1.0f, 1.0f,
+				0.2f, 0.2f, 1.0f, 0.0f,
+				-0.2f, 0.2f, 0.0f, 0.0f}, 0, 16);
 		ballVertices.setIndices(new short[] {0, 1, 2, 2, 3, 0}, 0, 6);
+		
+		ballTexture = new Texture( (GLGame)game, "sredni_yoba.png");
+		//
+		
 		targetVertices = new Vertices(glGraphics, 4, 6, false, false);
 		targetVertices.setVertices(new float[] { 	-0.25f, -0.25f,
 													0.25f, -0.25f,
@@ -74,13 +95,13 @@ class CollisionScreen extends Screen {
 	
 	@Override
 	public void update(float deltaTime) {
+		//deltaTime /= 2;
 		List<TouchEvent> touchEvents = game.getInput().getTouchEvents();
 		int len = touchEvents.size();
 		
 		for (int i = 0; i < len; i++) {
 			TouchEvent event = touchEvents.get(i);
-			touchPos.x = (event.x / (float) glGraphics.getWidth()) * WORLD_WIDTH;
-			touchPos.y = (1 - event.y / (float) glGraphics.getHeight()) * WORLD_HEIGHT;
+			camera.touchToWorld(touchPos.set(event.x, event.y));
 			cannon.angle = touchPos.sub(cannon.position).angle();
 			
 			if(event.type == TouchEvent.TOUCH_UP) {
@@ -89,18 +110,12 @@ class CollisionScreen extends Screen {
 				ball.position.set(cannon.position);
 				ball.velocity.x = FloatMath.cos(radians) * ballSpeed;
 				ball.velocity.y = FloatMath.sin(radians) * ballSpeed;
-				//ball.bounds.lowerLeft.set(ball.position.x - 0.1f, ball.position.y - 0.1f);
-				Circle bounds = (Circle) ball.bounds;
-				bounds.center.set(ball.position.x, ball.position.y);
-				ball.bounds = bounds;
+				ball.bounds.center.set(ball.position.x, ball.position.y);
 			}
 		}
 		ball.velocity.add(gravity.x * deltaTime, gravity.y * deltaTime);
 		ball.position.add(ball.velocity.x * deltaTime, ball.velocity.y * deltaTime);
-		//ball.bounds.lowerLeft.add(ball.velocity.x * deltaTime, ball.velocity.y * deltaTime);
-		Circle bounds = (Circle) ball.bounds;
-		bounds.center.add(ball.velocity.x * deltaTime, ball.velocity.y * deltaTime);
-		ball.bounds = bounds;
+		ball.bounds.center.set(ball.position.x, ball.position.y);
 		
 		List<GameObject> colliders = grid.getPotentialColliders(ball);
 		len = colliders.size();
@@ -113,18 +128,34 @@ class CollisionScreen extends Screen {
 				targets.remove(collider);
 			}
 		}
+		
+		if(ball.position.y > 0) {
+			camera.position.set(ball.position);
+			//camera.zoom = 1 + ball.position.y / WORLD_HEIGHT;
+		} else {
+			camera.position.set(WORLD_WIDTH / 2, WORLD_HEIGHT / 2);
+			//camera.zoom = 1;
+		}
+		fps.logFrame();
 	}
 	
 	
 	@Override
 	public void present(float deltaTime) {
 		GL10 gl = glGraphics.getGL();
-		gl.glViewport(0, 0, glGraphics.getWidth(), glGraphics.getHeight());
+//		gl.glViewport(0, 0, glGraphics.getWidth(), glGraphics.getHeight());
+//		gl.glClearColor(0, 0.5f, 1.0f, 1);
+//		gl.glClear(GL10.GL_COLOR_BUFFER_BIT);
+//		gl.glMatrixMode(GL10.GL_PROJECTION);
+//		gl.glLoadIdentity();
+//		gl.glOrthof(0, WORLD_WIDTH, 0, WORLD_HEIGHT, 1, -1);
+//		
+//		
+//		gl.glMatrixMode(GL10.GL_MODELVIEW);
+		
 		gl.glClear(GL10.GL_COLOR_BUFFER_BIT);
-		gl.glMatrixMode(GL10.GL_PROJECTION);
-		gl.glLoadIdentity();
-		gl.glOrthof(0, WORLD_WIDTH, 0, WORLD_HEIGHT, 1, -1);
-		gl.glMatrixMode(GL10.GL_MODELVIEW);
+		camera.setViewportAndMatrices();
+		
 		gl.glColor4f(0, 1, 0, 1);
 		targetVertices.bind();
 		
@@ -140,10 +171,20 @@ class CollisionScreen extends Screen {
 		targetVertices.unbind();
 		gl.glLoadIdentity();
 		gl.glTranslatef(ball.position.x, ball.position.y, 0);
-		gl.glColor4f(1,0,0,1);
+		gl.glColor4f(1,1,1,1);
+		//
+		gl.glEnable(GL10.GL_BLEND);
+		gl.glBlendFunc(GL10.GL_SRC_ALPHA, GL10.GL_ONE_MINUS_SRC_ALPHA);
+		gl.glEnable(GL10.GL_TEXTURE_2D);
+		
+		//
 		ballVertices.bind();
 		ballVertices.draw(GL10.GL_TRIANGLES, 0, 6);
 		ballVertices.unbind();
+		
+		gl.glDisable(GL10.GL_TEXTURE_2D);
+		gl.glDisable(GL10.GL_BLEND);
+		
 		gl.glLoadIdentity();
 		gl.glTranslatef(cannon.position.x, cannon.position.y, 0);
 		gl.glRotatef(cannon.angle, 0, 0, 1);
@@ -164,7 +205,8 @@ class CollisionScreen extends Screen {
 	@Override
 	public void resume() {
 		// TODO Auto-generated method stub
-		
+		ballTexture.reload();	
+		ballTexture.bind();
 	}
 	
 	
